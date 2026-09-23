@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TechFix Go — Book, track, and get your device fixed</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:#0B0F17;
+    --panel:#121926;
+    --panel-alt:#0E1420;
+    --line:#243044;
+    --line-soft:#1A2333;
+    --text:#EAEEF5;
+    --muted:#8C9AB3;
+    --teal:#3ED9A3;
+    --teal-dim:#1F5E48;
+    --amber:#F5A93C;
+    --red:#E8615C;
+    --radius-pill: 999px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{ background:var(--bg); color:var(--text); font-family:'Inter', sans-serif; line-height:1.6; font-size:16.5px; -webkit-font-smoothing:antialiased; }
+  h1,h2,h3,h4{ font-family:'Space Grotesk', sans-serif; font-weight:600; letter-spacing:-0.01em; line-height:1.1; }
+  .mono{ font-family:'IBM Plex Mono', monospace; }
+  a{ color:inherit; text-decoration:none; }
+  button{ font-family:inherit; cursor:pointer; }
+  .wrap{ max-width:1160px; margin:0 auto; padding:0 28px; }
+  section{ padding:100px 0; border-bottom:1px solid var(--line-soft); }
+  @media (max-width:720px){ section{padding:64px 0;} .wrap{padding:0 20px;} }
+  ::selection{ background:var(--teal); color:#08110D; }
+  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+
+  /* ---------- view routing + transitions ---------- */
+  .view{ opacity:0; transform:translateY(10px); transition:opacity 0.35s ease, transform 0.35s ease; }
+  .view.hidden{ display:none; }
+  .view.fade-view-in{ opacity:1; transform:translateY(0); }
+
+  .fade-in-section{ opacity:0; transform:translateY(18px); transition:opacity 0.6s ease, transform 0.6s ease; }
+  .fade-in-section.visible{ opacity:1; transform:translateY(0); }
+
+  .service-card, .trust-card{ opacity:0; transform:translateY(16px); transition:opacity 0.5s ease, transform 0.5s ease, border-color 0.2s ease, transform 0.2s ease; }
+  .reveal-group.visible .service-card, .reveal-group.visible .trust-card{ opacity:1; transform:translateY(0); }
+  .services-grid .service-card:nth-child(1){transition-delay:.02s;}
+  .services-grid .service-card:nth-child(2){transition-delay:.08s;}
+  .services-grid .service-card:nth-child(3){transition-delay:.14s;}
+  .services-grid .service-card:nth-child(4){transition-delay:.2s;}
+  .services-grid .service-card:nth-child(5){transition-delay:.26s;}
+  .services-grid .service-card:nth-child(6){transition-delay:.32s;}
+  .trust-grid .trust-card:nth-child(1){transition-delay:.02s;}
+  .trust-grid .trust-card:nth-child(2){transition-delay:.08s;}
+  .trust-grid .trust-card:nth-child(3){transition-delay:.14s;}
+  .trust-grid .trust-card:nth-child(4){transition-delay:.2s;}
+  .service-card:hover, .trust-card:hover{ border-color:var(--teal-dim); transform:translateY(-3px); }
+
+  /* ---------- nav (logo on the side, links centered) ---------- */
+  header{ position:sticky; top:0; z-index:60; background:rgba(11,15,23,0.92); backdrop-filter: blur(10px); border-bottom:1px solid var(--line-soft); }
+  .nav{ display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:16px; padding:18px 28px; max-width:1160px; margin:0 auto; }
+  .logo{ justify-self:start; display:flex; align-items:center; gap:9px; font-family:'Space Grotesk'; font-weight:700; font-size:20px; background:none; border:none; color:var(--text); }
+  .logo .dot{ width:9px; height:9px; background:var(--teal); border-radius:50%; box-shadow:0 0 10px var(--teal); }
+  .navlinks{ justify-self:center; display:flex; gap:30px; font-size:14.5px; color:var(--muted); }
+  .navlinks a{ transition:color 0.15s ease; }
+  .navlinks a:hover{ color:var(--text); }
+  @media (max-width:940px){ .navlinks{display:none;} }
+  .nav-actions{ justify-self:end; display:flex; align-items:center; gap:10px; }
+
+  .gsi-btn{ display:flex; align-items:center; gap:8px; background:#fff; color:#3C4043; border:1px solid #dadce0; border-radius:6px; padding:9px 14px 9px 10px; font-size:13.5px; font-weight:500; transition:box-shadow 0.2s ease; }
+  .gsi-btn:hover{ box-shadow:0 1px 6px rgba(0,0,0,0.35); }
+  .gsi-g{ width:17px; height:17px; flex-shrink:0; }
+
+  .user-chip{ display:none; align-items:center; gap:9px; background:var(--panel); border:1px solid var(--line); padding:5px 12px 5px 5px; border-radius:var(--radius-pill); font-size:13px; }
+  .user-chip .avatar{ width:24px; height:24px; border-radius:50%; background:var(--teal); color:#08110D; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:11px; font-family:'Space Grotesk'; }
+  .user-chip button{ background:none; border:none; color:var(--muted); font-size:11.5px; text-decoration:underline; }
+  .user-chip button:hover{ color:var(--text); }
+
+  .navcta{ background:var(--teal); color:#082017; font-weight:600; font-size:14px; padding:10px 19px; border:none; border-radius:var(--radius-pill); transition:transform 0.15s ease, filter 0.15s ease; }
+  .navcta:hover{ filter:brightness(1.08); transform:translateY(-1px); }
+  .burger{ display:none; background:none; border:1px solid var(--line); color:var(--text); width:38px; height:38px; border-radius:8px; font-size:16px; }
+  @media (max-width:940px){ .burger{ display:block; } }
+  .mobile-menu{ display:none; flex-direction:column; padding:8px 28px 18px; border-bottom:1px solid var(--line-soft); background:var(--bg); }
+  .mobile-menu.open{ display:flex; }
+  .mobile-menu a{ padding:13px 0; border-top:1px solid var(--line-soft); color:var(--muted); font-size:14.5px; background:none; border-left:none; border-right:none; border-bottom:none; text-align:left; }
+  .mobile-menu a:hover{ color:var(--text); }
+
+  /* ---------- hero (big scale + illustration) ---------- */
+  .hero{ padding-top:76px; padding-bottom:64px; }
+  .hero-content{ max-width:720px; margin:0 auto; text-align:center; }
+  .eyebrow-line{ display:flex; align-items:center; justify-content:center; gap:10px; color:var(--teal); font-size:13px; margin-bottom:22px; font-family:'IBM Plex Mono'; opacity:0; animation:fadeUp .6s ease forwards; }
+  .eyebrow-line::before, .eyebrow-line::after{ content:""; width:22px; height:1px; background:var(--teal); }
+  .hero h1{ font-size:clamp(38px, 7vw, 78px); opacity:0; animation:fadeUp .6s ease .1s forwards; }
+  .hero p.lede{ margin-top:20px; font-size:clamp(16px,2vw,19px); color:var(--muted); opacity:0; animation:fadeUp .6s ease .2s forwards; }
+  @keyframes fadeUp{ from{ opacity:0; transform:translateY(14px);} to{ opacity:1; transform:translateY(0);} }
+  .hero-ctas{ display:flex; gap:16px; margin-top:32px; flex-wrap:wrap; justify-content:center; opacity:0; animation:fadeUp .6s ease .3s forwards; }
+  .btn-primary{ background:var(--teal); color:#082017; font-weight:600; padding:14px 26px; border:none; border-radius:var(--radius-pill); font-size:15px; display:inline-block; transition:transform 0.15s ease, filter 0.15s ease; }
+  .btn-primary:hover{ filter:brightness(1.08); transform:translateY(-2px); }
+  .btn-ghost{ border:1px solid var(--line); background:none; color:var(--text); padding:14px 26px; border-radius:var(--radius-pill); font-size:15px; display:inline-block; transition:transform 0.15s ease, border-color 0.15s ease, color 0.15s ease; }
+  .btn-ghost:hover{ border-color:var(--teal); color:var(--teal); transform:translateY(-2px); }
+  .btn-hero{ padding:18px 36px !important; font-size:16.5px !important; }
+
+  .hero-stats{ display:flex; gap:40px; margin-top:52px; flex-wrap:wrap; justify-content:center; opacity:0; animation:fadeUp .6s ease .4s forwards; }
+  .hero-stat{ text-align:center; }
+  .hero-stat b{ display:block; font-family:'Space Grotesk'; font-size:24px; color:var(--teal); }
+  .hero-stat span{ color:var(--muted); font-size:12.5px; }
+
+  .hero-visual{ margin-top:64px; display:flex; justify-content:center; opacity:0; animation:fadeUp .7s ease .5s forwards; }
+  .hero-illustration{ width:100%; max-width:640px; height:auto; }
+  .float-anim{ animation: floatY 4.5s ease-in-out infinite; }
+  @keyframes floatY{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-10px);} }
+  .glow-dot{ animation: glowPulse 2.4s ease-in-out infinite; }
+  @keyframes glowPulse{ 0%,100%{ opacity:0.5;} 50%{ opacity:1;} }
+
+  /* ---------- section heads ---------- */
+  .sec-head{ max-width:640px; margin-bottom:48px; }
+  .sec-tag{ color:var(--teal); font-family:'IBM Plex Mono'; font-size:13px; margin-bottom:14px; display:block; }
+  .sec-head h2{ font-size:clamp(28px,3.6vw,42px); }
+  .sec-head p{ color:var(--muted); margin-top:14px; font-size:16px; }
+
+  /* ---------- services ---------- */
+  .services-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); }
+  @media (max-width:860px){ .services-grid{ grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:560px){ .services-grid{ grid-template-columns:1fr;} }
+  .service-card{ background:var(--panel-alt); padding:30px; display:flex; flex-direction:column; gap:13px; }
+  .service-icon{ width:42px; height:42px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#08110D; font-size:18px; background:var(--teal); }
+  .service-card h4{ font-size:17px; font-weight:500; }
+  .service-card p{ font-size:14px; color:var(--muted); flex-grow:1; }
+
+  /* ---------- pricing ---------- */
+  table.pricing{ width:100%; border-collapse:collapse; font-size:15px; }
+  table.pricing th{ text-align:left; font-family:'IBM Plex Mono'; font-weight:500; font-size:12px; color:var(--muted); padding:13px 15px; border-bottom:1px solid var(--line); text-transform:uppercase; letter-spacing:0.04em; }
+  table.pricing td{ padding:15px; border-bottom:1px solid var(--line-soft); }
+  table.pricing td:last-child, table.pricing th:last-child{ text-align:right; font-family:'IBM Plex Mono'; color:var(--teal); }
+
+  /* ---------- journey ---------- */
+  .journey-track{ display:grid; grid-template-columns:repeat(5,1fr); gap:0; }
+  @media (max-width:900px){ .journey-track{ grid-template-columns:1fr; } }
+  .journey-step{ position:relative; padding:26px 18px 26px 0; border-top:2px solid var(--line); }
+  .journey-step:first-child{ padding-left:0; }
+  @media (max-width:900px){ .journey-step{ border-top:none; border-left:2px solid var(--line); padding:18px 0 18px 22px; } }
+  .journey-step .jnum{ font-family:'IBM Plex Mono'; color:var(--teal); font-size:13px; display:block; margin-bottom:10px; }
+  .journey-step h4{ font-size:15.5px; font-weight:500; margin-bottom:6px; }
+  .journey-step p{ font-size:13.5px; color:var(--muted); }
+
+  /* ---------- back link ---------- */
+  .back-link{ display:inline-flex; align-items:center; gap:6px; color:var(--muted); font-size:13.5px; margin-bottom:30px; background:none; border:none; padding:0; transition:color 0.15s ease; }
+  .back-link:hover{ color:var(--teal); }
+
+  /* ---------- forms ---------- */
+  .panel{ background:var(--panel); border:1px solid var(--line); padding:36px; }
+  @media (max-width:600px){ .panel{ padding:24px; } }
+  .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media (max-width:700px){ .form-grid{ grid-template-columns:1fr; } }
+  .field{ display:flex; flex-direction:column; gap:7px; }
+  .field.full{ grid-column:1 / -1; }
+  .field label{ font-size:13px; color:var(--muted); }
+  .field .req{ color:var(--amber); }
+  .field input, .field select, .field textarea{
+    background:var(--panel-alt); border:1px solid var(--line); color:var(--text);
+    padding:12px 14px; font-size:14.5px; font-family:'Inter'; border-radius:4px; width:100%;
+    transition:border-color 0.15s ease;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{ outline:none; border-color:var(--teal); }
+  .field textarea{ resize:vertical; min-height:96px; }
+  .field-hint{ font-size:12.5px; color:var(--muted); }
+  .radio-group{ display:flex; gap:14px; flex-wrap:wrap; }
+  .radio-opt{ flex:1; min-width:200px; border:1px solid var(--line); padding:14px 16px; border-radius:6px; display:flex; gap:10px; align-items:flex-start; cursor:pointer; transition:border-color 0.15s ease; }
+  .radio-opt:has(input:checked){ border-color:var(--teal); background:rgba(62,217,163,0.06); }
+  .radio-opt input{ margin-top:3px; accent-color:var(--teal); }
+  .radio-opt b{ display:block; font-size:14px; font-weight:500; }
+  .radio-opt span{ font-size:12.5px; color:var(--muted); }
+  .hidden{ display:none !important; }
+  .form-actions{ margin-top:26px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  .form-note{ font-size:12.5px; color:var(--muted); }
+  .btn-submit{ background:var(--teal); color:#082017; font-weight:600; padding:14px 27px; border:none; border-radius:var(--radius-pill); font-size:15px; transition:transform 0.15s ease, filter 0.15s ease; }
+  .btn-submit:hover{ filter:brightness(1.08); transform:translateY(-2px); }
+  .section-divider{ border:none; border-top:1px solid var(--line-soft); margin:32px 0; }
+  .subhead{ font-size:13px; color:var(--teal); font-family:'IBM Plex Mono'; margin-bottom:18px; display:block; }
+
+  /* ---------- pickup/delivery ---------- */
+  .pd-grid{ display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line); border:1px solid var(--line); margin-bottom:36px; }
+  @media (max-width:780px){ .pd-grid{ grid-template-columns:1fr; } }
+  .pd-card{ background:var(--panel-alt); padding:28px; }
+  .pd-card h4{ font-size:17px; font-weight:500; margin-bottom:10px; }
+  .pd-card p{ color:var(--muted); font-size:14px; margin-bottom:14px; }
+  .pd-card ul{ list-style:none; display:flex; flex-direction:column; gap:8px; }
+  .pd-card li{ font-size:13.5px; color:var(--muted); display:flex; gap:8px; }
+  .pd-card li::before{ content:"—"; color:var(--teal); }
+
+  .route-graphic{ display:flex; justify-content:center; margin-bottom:40px; }
+  .route-graphic svg{ width:100%; max-width:560px; height:auto; }
+  .route-dash{ stroke-dasharray:6 8; animation: dashMove 2s linear infinite; }
+  @keyframes dashMove{ to{ stroke-dashoffset:-28; } }
+
+  /* ---------- average stat row ---------- */
+  .avg-row{ display:flex; gap:1px; background:var(--line); border:1px solid var(--line); margin-bottom:36px; }
+  @media (max-width:600px){ .avg-row{ flex-direction:column; } }
+  .avg-card{ flex:1; background:var(--panel-alt); padding:22px; text-align:center; }
+  .avg-card b{ font-family:'Space Grotesk'; font-size:22px; color:var(--teal); display:block; margin-bottom:4px; }
+  .avg-card span{ font-size:12.5px; color:var(--muted); }
+
+  /* ---------- tracker ---------- */
+  .tracker-input{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:8px; }
+  .tracker-input input{ flex:1; min-width:220px; background:var(--panel-alt); border:1px solid var(--line); color:var(--text); padding:13px 16px; font-family:'IBM Plex Mono'; font-size:14px; border-radius:4px; }
+  .tracker-input input:focus{ outline:none; border-color:var(--teal); }
+  .tracker-hint{ font-size:12.5px; color:var(--muted); margin-bottom:28px; }
+  .tracker-hint b{ color:var(--teal); font-family:'IBM Plex Mono'; }
+  .tracker-error{ display:none; color:var(--red); font-size:14px; margin-top:8px; }
+  .tracker-error.show{ display:block; }
+
+  .track-result{ display:none; margin-top:30px; }
+  .track-result.show{ display:block; animation: fadeUp .4s ease; }
+  .track-head{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:26px; flex-wrap:wrap; gap:12px; }
+  .track-head h3{ font-size:20px; }
+  .track-head .status-pill{ font-family:'IBM Plex Mono'; font-size:12.5px; color:var(--teal); border:1px solid var(--teal-dim); padding:6px 14px; border-radius:var(--radius-pill); white-space:nowrap; }
+
+  .track-summary{ border:1px solid var(--line); border-radius:8px; overflow:hidden; margin-bottom:34px; }
+  .track-summary-row{ display:flex; justify-content:space-between; gap:14px; padding:13px 17px; border-bottom:1px solid var(--line-soft); font-size:14px; }
+  .track-summary-row:last-child{ border-bottom:none; }
+  .track-summary-row span:first-child{ color:var(--muted); }
+  .track-summary-row span:last-child{ font-weight:500; text-align:right; }
+
+  .timeline{ display:flex; }
+  @media (max-width:700px){ .timeline{ flex-direction:column; } }
+  .tl-step{ flex:1; position:relative; padding-top:0; }
+  .tl-line{ height:2px; background:var(--line); position:relative; margin-bottom:14px; }
+  .tl-line.done{ background:var(--teal); }
+  @media (max-width:700px){
+    .tl-step{ display:flex; gap:15px; padding-bottom:25px; }
+    .tl-line{ width:2px; height:100%; min-height:34px; margin:0; }
+  }
+  .tl-dot{ width:14px; height:14px; border-radius:50%; background:var(--panel-alt); border:2px solid var(--line); position:absolute; top:-7px; left:0; }
+  .tl-dot.done{ background:var(--teal); border-color:var(--teal); }
+  @keyframes pulseDot{ 0%{ box-shadow:0 0 0 0 rgba(62,217,163,0.4); } 70%{ box-shadow:0 0 0 10px rgba(62,217,163,0); } 100%{ box-shadow:0 0 0 0 rgba(62,217,163,0); } }
+  .tl-dot.current{ border-color:var(--teal); animation:pulseDot 1.8s infinite; }
+  @media (max-width:700px){ .tl-dot{ position:static; flex-shrink:0; margin-top:2px;} }
+  .tl-step h5{ font-size:13.5px; font-weight:500; margin-bottom:4px; }
+  .tl-step p{ font-size:12px; color:var(--muted); }
+
+  /* ---------- trust ---------- */
+  .trust-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
+  @media (max-width:860px){ .trust-grid{ grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:520px){ .trust-grid{ grid-template-columns:1fr;} }
+  .trust-card{ border:1px solid var(--line); padding:24px; }
+  .trust-card h4{ font-size:16px; font-weight:500; margin-bottom:8px; }
+  .trust-card p{ font-size:13.5px; color:var(--muted); }
+
+  /* ---------- footer ---------- */
+  footer{ padding:64px 0 40px; }
+  .footer-grid{ display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:28px; }
+  footer h3{ font-size:clamp(22px,3vw,32px); max-width:14em; }
+  .footer-bottom{ margin-top:52px; padding-top:24px; border-top:1px solid var(--line-soft); display:flex; justify-content:space-between; color:var(--muted); font-size:13px; flex-wrap:wrap; gap:10px; }
+
+  /* ---------- modal (Google sign-in simulation) ---------- */
+  .modal-overlay{ position:fixed; inset:0; background:rgba(6,8,13,0.72); display:none; align-items:center; justify-content:center; z-index:100; padding:20px; }
+  .modal-overlay.open{ display:flex; }
+  .gmodal{ background:#fff; color:#202124; width:100%; max-width:390px; border-radius:8px; overflow:hidden; font-family:'Inter', Arial, sans-serif; box-shadow:0 12px 40px rgba(0,0,0,0.4); position:relative; }
+  .gmodal-head{ padding:24px 24px 18px; text-align:center; }
+  .gmodal-g{ width:36px; height:36px; margin:0 auto 18px; display:block; }
+  .gmodal-head h3{ font-family:'Inter'; font-size:18px; font-weight:500; color:#202124; }
+  .gmodal-head p{ font-size:13.5px; color:#5f6368; margin-top:8px; }
+  .gmodal-list{ padding:6px 0 14px; }
+  .gmodal-account{ display:flex; align-items:center; gap:14px; padding:11px 24px; transition:background 0.12s ease; }
+  .gmodal-account:hover{ background:#f6f8fc; cursor:pointer; }
+  .gm-avatar{ width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:600; font-size:13px; flex-shrink:0; }
+  .gm-name{ font-size:13.5px; color:#202124; font-weight:500; }
+  .gm-email{ font-size:12px; color:#5f6368; }
+  .gmodal-foot{ padding:14px 24px 24px; border-top:1px solid #e8eaed; }
+  .gmodal-foot button{ width:100%; text-align:left; background:none; border:none; color:#1a73e8; font-size:13.5px; padding:8px 0; font-weight:500; }
+  .gmodal-close{ position:absolute; top:14px; right:16px; background:none; border:none; color:#5f6368; font-size:18px; }
+
+  /* ---------- toast ---------- */
+  .toast{ position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--panel); border:1px solid var(--teal-dim); color:var(--text); padding:14px 22px; border-radius:8px; font-size:13.5px; opacity:0; pointer-events:none; transition:all 0.25s ease; z-index:200; display:flex; align-items:center; gap:10px; }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast .tdot{ width:8px; height:8px; border-radius:50%; background:var(--teal); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <button class="logo" onclick="showView(event,'view-home')"><span class="dot"></span>TechFix Go</button>
+    <nav class="navlinks">
+      <a href="#services" onclick="goHomeAnchor(event,'services')">Services</a>
+      <a href="#pricing" onclick="goHomeAnchor(event,'pricing')">Pricing</a>
+      <a href="#pickup-delivery" onclick="goHomeAnchor(event,'pickup-delivery')">Pickup &amp; Delivery</a>
+      <a href="#" onclick="showView(event,'view-tracking')">Track Repair</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="gsi-btn" id="signInBtn" onclick="openSignIn()">
+        <svg class="gsi-g" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.5 13.2l7.9 6.1C12.3 13.1 17.6 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.5 3-2.2 5.5-4.7 7.2l7.4 5.7C43.7 37.6 46.5 31.6 46.5 24.5z"/><path fill="#FBBC05" d="M10.4 19.3a14.5 14.5 0 0 0 0 9.4l-7.9 6.1a24 24 0 0 1 0-21.6l7.9 6.1z"/><path fill="#34A853" d="M24 48c6.3 0 11.6-2.1 15.5-5.6l-7.4-5.7c-2.1 1.4-4.8 2.3-8.1 2.3-6.4 0-11.7-3.6-13.6-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+        Sign in
+      </button>
+      <div class="user-chip" id="userChip">
+        <span class="avatar" id="userAvatar">A</span>
+        <span id="userName">—</span>
+        <button onclick="signOut()">Sign out</button>
+      </div>
+      <button class="navcta" onclick="showView(event,'view-booking')">Book a Repair</button>
+      <button class="burger" onclick="toggleMobileMenu()">☰</button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#services" onclick="goHomeAnchor(event,'services')">Services</a>
+    <a href="#pricing" onclick="goHomeAnchor(event,'pricing')">Pricing</a>
+    <a href="#pickup-delivery" onclick="goHomeAnchor(event,'pickup-delivery')">Pickup &amp; Delivery</a>
+    <a href="#" onclick="showView(event,'view-tracking')">Track Repair</a>
+    <a href="#" onclick="showView(event,'view-booking')">Book a Repair</a>
+  </div>
+</header>
+
+<!-- ============ HOME VIEW ============ -->
+<div class="view fade-view-in" id="view-home">
+
+  <section class="hero">
+    <div class="wrap hero-content">
+      <span class="eyebrow-line">Online tech repair</span>
+      <h1>Tech breaks.<br>We fix it fast.</h1>
+      <p class="lede">Book a repair, track it live, and get your device back — verified technicians, upfront pricing.</p>
+      <div class="hero-ctas">
+        <button class="btn-primary btn-hero" onclick="showView(event,'view-booking')">Book a Repair</button>
+        <button class="btn-ghost btn-hero" onclick="showView(event,'view-tracking')">Track a Repair</button>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><b>100%</b><span>Verified technicians</span></div>
+        <div class="hero-stat"><b>2–4 hrs</b><span>Average pickup time</span></div>
+        <div class="hero-stat"><b>24–48 hrs</b><span>Average delivery after repair</span></div>
+      </div>
+
+      <div class="hero-visual">
+        <svg class="hero-illustration float-anim" viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg">
+          <g opacity="0.35" stroke="#243044" stroke-width="2" fill="none">
+            <path d="M40 90 H240 V190"/>
+            <path d="M860 470 H680 V370"/>
+          </g>
+          <circle class="glow-dot" cx="240" cy="190" r="4" fill="#3ED9A3"/>
+          <circle class="glow-dot" cx="680" cy="370" r="4" fill="#F5A93C"/>
+
+          <rect x="255" y="335" width="390" height="16" rx="6" fill="#121926" stroke="#243044" stroke-width="2"/>
+          <path d="M225 335 L278 252 H622 L675 335 Z" fill="#0E1420" stroke="#243044" stroke-width="2"/>
+
+          <rect x="295" y="118" width="310" height="206" rx="12" fill="#0E1420" stroke="#243044" stroke-width="2"/>
+          <rect x="312" y="135" width="276" height="172" rx="4" fill="#121926"/>
+          <rect x="330" y="156" width="120" height="8" rx="4" fill="#2A3850"/>
+          <rect x="330" y="176" width="185" height="8" rx="4" fill="#1A2333"/>
+          <rect x="330" y="196" width="95" height="8" rx="4" fill="#1A2333"/>
+          <polyline points="330,255 362,230 392,262 424,218 456,252 486,232 518,256 548,238" fill="none" stroke="#3ED9A3" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+          <g transform="translate(575,135)">
+            <circle r="36" fill="#3ED9A3"/>
+            <path d="M-15 0 L-4 13 L17 -15" stroke="#08110D" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </g>
+
+          <g transform="translate(258,365) rotate(-25)">
+            <rect x="-6" y="-64" width="12" height="74" rx="6" fill="#F5A93C"/>
+            <circle cx="0" cy="-68" r="17" fill="none" stroke="#F5A93C" stroke-width="9"/>
+          </g>
+
+          <circle class="glow-dot" cx="150" cy="170" r="5" fill="#3ED9A3" opacity="0.6"/>
+          <circle class="glow-dot" cx="775" cy="230" r="4" fill="#3ED9A3" opacity="0.45"/>
+          <circle class="glow-dot" cx="715" cy="115" r="3" fill="#F5A93C" opacity="0.5"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <section id="services">
+    <div class="wrap">
+      <div class="sec-head fade-in-section">
+        <span class="sec-tag">Services</span>
+        <h2>Every repair, handled by a verified specialist</h2>
+        <p>From a cracked screen to a laptop that won't boot — pick a category and we'll match you with the right technician.</p>
+      </div>
+      <div class="services-grid reveal-group">
+        <div class="service-card"><div class="service-icon">⌁</div><h4>Software &amp; Virus Fix</h4><p>Freezing, crashing, malware, or a laptop that just feels slow.</p></div>
+        <div class="service-card"><div class="service-icon">▤</div><h4>Screen Replacement</h4><p>Cracked, flickering, or unresponsive laptop screens.</p></div>
+        <div class="service-card"><div class="service-icon">⎔</div><h4>Battery &amp; Power</h4><p>Won't charge, drains fast, or won't turn on at all.</p></div>
+        <div class="service-card"><div class="service-icon">✺</div><h4>Deep Cleaning &amp; Cooling</h4><p>Dust removal, thermal paste replacement, overheating fixes.</p></div>
+        <div class="service-card"><div class="service-icon">⌨</div><h4>Keyboard &amp; Trackpad</h4><p>Sticky keys, unresponsive keys, or trackpad faults.</p></div>
+        <div class="service-card"><div class="service-icon">⟳</div><h4>OS Install &amp; Setup</h4><p>Fresh operating system install, data backup, and setup.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="pricing">
+    <div class="wrap">
+      <div class="sec-head fade-in-section">
+        <span class="sec-tag">Pricing</span>
+        <h2>Transparent pricing, no surprises</h2>
+        <p>See exactly what each repair costs before you book. Final price may vary slightly depending on parts needed.</p>
+      </div>
+      <div class="panel fade-in-section">
+        <table class="pricing">
+          <tr><th>Service</th><th>Price range</th></tr>
+          <tr><td>Software &amp; virus fix</td><td>300฿ – 600฿</td></tr>
+          <tr><td>Laptop deep cleaning</td><td>500฿ – 800฿</td></tr>
+          <tr><td>Screen replacement</td><td>1,000฿ – 1,800฿</td></tr>
+          <tr><td>Battery replacement</td><td>800฿ – 1,500฿</td></tr>
+          <tr><td>Keyboard / trackpad repair</td><td>600฿ – 1,200฿</td></tr>
+          <tr><td>OS installation &amp; setup</td><td>500฿ – 700฿</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="how-it-works">
+    <div class="wrap">
+      <div class="sec-head fade-in-section">
+        <span class="sec-tag">How it works</span>
+        <h2>From "it's broken" to "it's fixed" in five steps</h2>
+      </div>
+      <div class="journey-track fade-in-section">
+        <div class="journey-step"><span class="jnum">01</span><h4>Book a repair</h4><p>Tell us your device and what's wrong.</p></div>
+        <div class="journey-step"><span class="jnum">02</span><h4>Choose pickup or drop-off</h4><p>Pick a date and time that works for you.</p></div>
+        <div class="journey-step"><span class="jnum">03</span><h4>Diagnosis</h4><p>A verified technician confirms the issue and price.</p></div>
+        <div class="journey-step"><span class="jnum">04</span><h4>Repair</h4><p>Track every stage live from this site.</p></div>
+        <div class="journey-step"><span class="jnum">05</span><h4>Delivered</h4><p>Get it back, pay securely, leave a review.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="pickup-delivery">
+    <div class="wrap">
+      <div class="sec-head fade-in-section">
+        <span class="sec-tag">Pickup &amp; Delivery</span>
+        <h2>We'll come to you</h2>
+        <p>No time to visit a repair shop? Choose pickup and delivery when you book, and we'll handle the rest.</p>
+      </div>
+
+      <div class="route-graphic fade-in-section">
+        <svg viewBox="0 0 560 140" xmlns="http://www.w3.org/2000/svg">
+          <line class="route-dash" x1="60" y1="70" x2="500" y2="70" stroke="#243044" stroke-width="3"/>
+          <circle cx="60" cy="70" r="10" fill="#3ED9A3"/>
+          <circle cx="500" cy="70" r="10" fill="#3ED9A3"/>
+          <text x="60" y="112" fill="#8C9AB3" font-family="Inter" font-size="13" text-anchor="middle">Pickup</text>
+          <text x="500" y="112" fill="#8C9AB3" font-family="Inter" font-size="13" text-anchor="middle">Delivery</text>
+          <g transform="translate(260,45)">
+            <rect x="0" y="10" width="52" height="26" rx="4" fill="#121926" stroke="#3ED9A3" stroke-width="2"/>
+            <path d="M52 16 H70 L80 28 V36 H52 Z" fill="#121926" stroke="#3ED9A3" stroke-width="2"/>
+            <circle cx="16" cy="40" r="6" fill="#0B0F17" stroke="#3ED9A3" stroke-width="2"/>
+            <circle cx="64" cy="40" r="6" fill="#0B0F17" stroke="#3ED9A3" stroke-width="2"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="avg-row fade-in-section">
+        <div class="avg-card"><b>2–4 hrs</b><span>Average time to pickup after booking</span></div>
+        <div class="avg-card"><b>24–48 hrs</b><span>Average delivery time after repair is ready</span></div>
+      </div>
+      <div class="pd-grid fade-in-section">
+        <div class="pd-card">
+          <h4>How pickup works</h4>
+          <p>Available in most urban areas. Choose "Pickup &amp; delivery" when you book, and select a date and time window.</p>
+          <ul>
+            <li>Courier arrives within your chosen time window</li>
+            <li>Device is logged and photographed for your record</li>
+            <li>You receive a confirmation the moment it's collected</li>
+          </ul>
+        </div>
+        <div class="pd-card">
+          <h4>How delivery works</h4>
+          <p>Once repaired and quality-checked, your device is delivered back to the same address.</p>
+          <ul>
+            <li>Delivery is scheduled once your ticket status reaches "Ready"</li>
+            <li>Live tracking updates as it's on the way</li>
+            <li>Sign for the device on arrival — repair notes included</li>
+          </ul>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="showView(event,'view-booking')">Book a Repair</button>
+    </div>
+  </section>
+
+  <section id="trust">
+    <div class="wrap">
+      <div class="sec-head fade-in-section">
+        <span class="sec-tag">Why customers trust us</span>
+        <h2>Verified fix. Verified trust.</h2>
+      </div>
+      <div class="trust-grid reveal-group">
+        <div class="trust-card"><h4>Verified technicians</h4><p>Every technician is screened and rated before joining the platform.</p></div>
+        <div class="trust-card"><h4>Upfront pricing</h4><p>Know the estimated cost before you ever commit to a repair.</p></div>
+        <div class="trust-card"><h4>Live tracking</h4><p>Follow your repair in real time, from diagnosis to delivery.</p></div>
+        <div class="trust-card"><h4>Pickup &amp; delivery</h4><p>Get your device collected and returned without leaving home.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <div class="footer-grid">
+        <h3>Diagnosed with care. Repaired with trust.</h3>
+        <button class="btn-primary" onclick="showView(event,'view-booking')">Book a Repair</button>
+      </div>
+      <div class="footer-bottom">
+        <span>TechFix Go — online technology repair platform</span>
+        <span>Laptops · Computers</span>
+      </div>
+    </div>
+  </footer>
+
+</div>
+
+<!-- ============ BOOKING VIEW ============ -->
+<div class="view hidden" id="view-booking">
+  <section style="border-bottom:none;">
+    <div class="wrap">
+      <button class="back-link" onclick="showView(event,'view-home')">← Back to home</button>
+      <div class="sec-head">
+        <span class="sec-tag">Book a Repair</span>
+        <h2>Start My Fix</h2>
+        <p>Tell us about your laptop and the problem you're having. You'll get a live tracking ticket the moment you submit.</p>
+      </div>
+      <form class="panel" id="bookingForm">
+        <span class="subhead">Laptop information</span>
+        <div class="form-grid">
+          <div class="field"><label>Full name <span class="req">*</span></label><input type="text" id="bFullName" required placeholder="Jane Somsak"></div>
+          <div class="field"><label>Email <span class="req">*</span></label><input type="email" id="bEmail" required placeholder="jane@email.com"></div>
+          <div class="field"><label>Phone number <span class="req">*</span></label><input type="tel" id="bPhone" required placeholder="08X-XXX-XXXX"></div>
+          <div class="field"><label>Laptop brand <span class="req">*</span></label>
+            <select id="bBrand" required>
+              <option value="">Select brand</option>
+              <option>Apple</option><option>Dell</option><option>HP</option><option>Lenovo</option><option>Asus</option><option>Acer</option><option>Other</option>
+            </select>
+          </div>
+          <div class="field"><label>Laptop model</label><input type="text" id="bModel" placeholder="e.g. MacBook Air M2, 2022"></div>
+        </div>
+
+        <hr class="section-divider">
+        <span class="subhead">What's wrong &amp; which service you need</span>
+        <div class="form-grid">
+          <div class="field"><label>Issue category <span class="req">*</span></label>
+            <select id="bIssue" required>
+              <option value="">Select issue</option>
+              <option value="Software &amp; virus fix" data-price="300฿ – 600฿">Software / virus / slow performance</option>
+              <option value="Screen replacement" data-price="1,000฿ – 1,800฿">Screen damage</option>
+              <option value="Battery replacement" data-price="800฿ – 1,500฿">Battery / won't charge</option>
+              <option value="Keyboard / trackpad repair" data-price="600฿ – 1,200฿">Keyboard / trackpad</option>
+              <option value="Deep cleaning &amp; cooling" data-price="500฿ – 800฿">Overheating / cleaning</option>
+              <option value="OS installation" data-price="500฿ – 700฿">Won't turn on / OS issue</option>
+              <option value="Other" data-price="To be confirmed">Something else</option>
+            </select>
+          </div>
+          <div class="field full"><label>Describe the problem <span class="req">*</span></label><textarea id="bDesc" required placeholder="Tell us what's happening — when it started, any error messages, and anything you've already tried."></textarea></div>
+          <div class="field full">
+            <label>Service type <span class="req">*</span></label>
+            <div class="radio-group">
+              <label class="radio-opt"><input type="radio" name="bService" value="Drop-off at center" checked onchange="toggleAddress()"><span><b>Drop-off at center</b><span>Bring your device to our repair center</span></span></label>
+              <label class="radio-opt"><input type="radio" name="bService" value="Pickup &amp; delivery" onchange="toggleAddress()"><span><b>Pickup &amp; delivery</b><span>We collect and return it to your door</span></span></label>
+            </div>
+          </div>
+          <div class="field full hidden" id="addressField"><label>Pickup address <span class="req">*</span></label><input type="text" id="bAddress" placeholder="House / building, street, district, city"></div>
+        </div>
+
+        <hr class="section-divider">
+        <span class="subhead">Pickup / drop-off date &amp; time</span>
+        <div class="form-grid">
+          <div class="field"><label>Preferred date <span class="req">*</span></label><input type="date" id="bDate" required></div>
+          <div class="field"><label>Preferred time window <span class="req">*</span></label>
+            <select id="bTime" required>
+              <option value="">Select a time</option>
+              <option>Morning (9AM – 12PM)</option>
+              <option>Afternoon (12PM – 4PM)</option>
+              <option>Evening (4PM – 7PM)</option>
+            </select>
+          </div>
+          <div class="field full field-hint">Average pickup is within 2–4 hours of your selected window, and average delivery is 24–48 hours after the repair is marked ready.</div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-submit">Submit Repair Request</button>
+          <span class="form-note">You'll be taken straight to live tracking for this ticket.</span>
+        </div>
+      </form>
+    </div>
+  </section>
+</div>
+
+<!-- ============ TRACKING VIEW ============ -->
+<div class="view hidden" id="view-tracking">
+  <section style="border-bottom:none;">
+    <div class="wrap">
+      <button class="back-link" onclick="showView(event,'view-home')">← Back to home</button>
+      <div class="sec-head">
+        <span class="sec-tag">Track Repair</span>
+        <h2>Check your repair status</h2>
+        <p>Enter the ticket ID you received when you booked.</p>
+      </div>
+
+      <div class="avg-row">
+        <div class="avg-card"><b>2–4 hrs</b><span>Average pickup time after booking</span></div>
+        <div class="avg-card"><b>24–48 hrs</b><span>Average delivery time after repair is ready</span></div>
+      </div>
+
+      <div class="panel">
+        <div class="tracker-input">
+          <input type="text" id="trackInput" placeholder="e.g. TFG-10234">
+          <button class="btn-primary" onclick="trackRepair()">Track</button>
+        </div>
+        <div class="tracker-hint">Try a demo ticket: <b>TFG-10234</b> or <b>TFG-88190</b></div>
+        <div class="tracker-error" id="trackError">We couldn't find that ticket. Double-check the ID and try again.</div>
+
+        <div class="track-result" id="trackResult">
+          <div class="track-head">
+            <div>
+              <span class="sec-tag" id="trackTicketLabel" style="margin-bottom:6px;">TFG-00000</span>
+              <h3 id="trackDeviceLabel">Device</h3>
+            </div>
+            <span class="status-pill" id="trackStatusPill">Status</span>
+          </div>
+
+          <div class="track-summary" id="trackSummary"></div>
+
+          <span class="subhead">Repair progress</span>
+          <div class="timeline" id="timeline"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Google sign-in simulation modal -->
+<div class="modal-overlay" id="signInModal">
+  <div class="gmodal">
+    <button class="gmodal-close" onclick="closeSignIn()">✕</button>
+    <div class="gmodal-head">
+      <svg class="gmodal-g" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.5 13.2l7.9 6.1C12.3 13.1 17.6 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.5 3-2.2 5.5-4.7 7.2l7.4 5.7C43.7 37.6 46.5 31.6 46.5 24.5z"/><path fill="#FBBC05" d="M10.4 19.3a14.5 14.5 0 0 0 0 9.4l-7.9 6.1a24 24 0 0 1 0-21.6l7.9 6.1z"/><path fill="#34A853" d="M24 48c6.3 0 11.6-2.1 15.5-5.6l-7.4-5.7c-2.1 1.4-4.8 2.3-8.1 2.3-6.4 0-11.7-3.6-13.6-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+      <h3>Choose an account</h3>
+      <p>to continue to TechFix Go</p>
+    </div>
+    <div class="gmodal-list">
+      <div class="gmodal-account" onclick="selectAccount('Jane Somsak','jane.somsak@gmail.com','#4285F4')">
+        <span class="gm-avatar" style="background:#4285F4;">J</span>
+        <span><span class="gm-name" style="display:block;">Jane Somsak</span><span class="gm-email">jane.somsak@gmail.com</span></span>
+      </div>
+      <div class="gmodal-account" onclick="selectAccount('Krit Anan','krit.anan@gmail.com','#34A853')">
+        <span class="gm-avatar" style="background:#34A853;">K</span>
+        <span><span class="gm-name" style="display:block;">Krit Anan</span><span class="gm-email">krit.anan@gmail.com</span></span>
+      </div>
+    </div>
+    <div class="gmodal-foot">
+      <button onclick="selectAccount('Guest User','guest@gmail.com','#8C9AB3')">Use another account</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="tdot"></span><span id="toastMsg">Signed in</span></div>
+
+<script>
+  /* ---------------- state ---------------- */
+  let currentUser = null;
+  let bookings = {
+    'TFG-10234': { device:'MacBook Pro 13" (Apple)', issue:'Screen replacement', tech:'Nont K.', service:'Pickup & delivery', slot:'Sep 11, Afternoon (12PM – 4PM)', eta:'Sep 13, 2026', stage:2 },
+    'TFG-88190': { device:'HP Pavilion 15', issue:'Battery replacement', tech:'Ploy S.', service:'Drop-off at center', slot:'Sep 10, Morning (9AM – 12PM)', eta:'Sep 12, 2026', stage:4 }
+  };
+  const STAGES = ['Request Received','Diagnosis','Repair in Progress','Quality Check','Ready / Delivered'];
+
+  /* ---------------- fade-in-on-scroll (sections + staggered grids) ---------------- */
+  const revealObserver = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        entry.target.classList.add('visible');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, {threshold:0.12});
+  document.querySelectorAll('.fade-in-section, .reveal-group').forEach(el=>revealObserver.observe(el));
+
+  /* ---------------- view routing ---------------- */
+  function showView(e, id){
+    if(e) e.preventDefault();
+    document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
+    const target = document.getElementById(id);
+    target.classList.remove('hidden');
+    target.classList.remove('fade-view-in');
+    void target.offsetWidth;
+    target.classList.add('fade-view-in');
+    window.scrollTo({top:0, behavior:'auto'});
+    document.getElementById('mobileMenu').classList.remove('open');
+  }
+
+  function goHomeAnchor(e, anchorId){
+    e.preventDefault();
+    showView(null, 'view-home');
+    document.getElementById('mobileMenu').classList.remove('open');
+    setTimeout(()=>{
+      document.getElementById(anchorId).scrollIntoView({behavior:'smooth'});
+    }, 60);
+  }
+
+  function toggleMobileMenu(){
+    document.getElementById('mobileMenu').classList.toggle('open');
+  }
+
+  /* ---------------- sign in (simulated) ---------------- */
+  function openSignIn(){ document.getElementById('signInModal').classList.add('open'); }
+  function closeSignIn(){ document.getElementById('signInModal').classList.remove('open'); }
+
+  function selectAccount(name, email, color){
+    currentUser = { name, email };
+    closeSignIn();
+
+    document.getElementById('signInBtn').style.display = 'none';
+    const chip = document.getElementById('userChip');
+    chip.style.display = 'flex';
+    document.getElementById('userAvatar').textContent = name.charAt(0);
+    document.getElementById('userAvatar').style.background = color;
+    document.getElementById('userName').textContent = name.split(' ')[0];
+
+    document.getElementById('bEmail').value = email;
+
+    showToast('Signed in as ' + name);
+  }
+
+  function signOut(){
+    currentUser = null;
+    document.getElementById('signInBtn').style.display = 'flex';
+    document.getElementById('userChip').style.display = 'none';
+    showToast('Signed out');
+  }
+
+  /* ---------------- toast ---------------- */
+  let toastTimer;
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>t.classList.remove('show'), 2800);
+  }
+
+  /* ---------------- booking form ---------------- */
+  function toggleAddress(){
+    const pickup = document.querySelector('input[name="bService"]:checked').value.indexOf('Pickup') === 0;
+    document.getElementById('addressField').classList.toggle('hidden', !pickup);
+    document.getElementById('bAddress').required = pickup;
+  }
+
+  function generateTicketId(){
+    return 'TFG-' + Math.floor(10000 + Math.random()*89999);
+  }
+
+  document.getElementById('bookingForm').addEventListener('submit', function(e){
+    e.preventDefault();
+
+    const brand = document.getElementById('bBrand').value;
+    const model = document.getElementById('bModel').value || 'Model not specified';
+    const issueSelect = document.getElementById('bIssue');
+    const service = document.querySelector('input[name="bService"]:checked').value;
+    const device = brand + ' ' + model;
+    const date = document.getElementById('bDate').value;
+    const time = document.getElementById('bTime').value;
+    const slot = (date || 'Date pending') + ', ' + (time || 'time pending');
+
+    const ticketId = generateTicketId();
+    bookings[ticketId] = {
+      device: device,
+      issue: issueSelect.options[issueSelect.selectedIndex].text,
+      tech: 'Assigning technician…',
+      service: service,
+      slot: slot,
+      eta: 'Pending diagnosis',
+      stage: 0
+    };
+
+    showToast('Booking confirmed — ticket ' + ticketId);
+    document.getElementById('bookingForm').reset();
+    document.getElementById('addressField').classList.add('hidden');
+
+    setTimeout(()=>{
+      showView(null, 'view-tracking');
+      document.getElementById('trackInput').value = ticketId;
+      trackRepair();
+    }, 500);
+  });
+
+  /* ---------------- tracker ---------------- */
+  function trackRepair(){
+    const id = document.getElementById('trackInput').value.trim().toUpperCase();
+    const record = bookings[id];
+    const errorEl = document.getElementById('trackError');
+    const resultEl = document.getElementById('trackResult');
+
+    if(!record){
+      errorEl.classList.add('show');
+      resultEl.classList.remove('show');
+      return;
+    }
+    errorEl.classList.remove('show');
+    resultEl.classList.add('show');
+
+    document.getElementById('trackTicketLabel').textContent = id;
+    document.getElementById('trackDeviceLabel').textContent = record.device;
+    document.getElementById('trackStatusPill').textContent = STAGES[record.stage];
+
+    const rows = [
+      ['Issue', record.issue],
+      ['Technician', record.tech],
+      ['Service type', record.service],
+      ['Pickup / drop-off', record.slot],
+      ['Estimated completion', record.eta]
+    ];
+    document.getElementById('trackSummary').innerHTML = rows.map(r =>
+      '<div class="track-summary-row"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'
+    ).join('');
+
+    const tl = document.getElementById('timeline');
+    tl.innerHTML = '';
+    STAGES.forEach((label, i)=>{
+      const done = i < record.stage;
+      const current = i === record.stage;
+      const step = document.createElement('div');
+      step.className = 'tl-step';
+      step.innerHTML =
+        '<div class="tl-line ' + (done || current ? 'done':'') + '"></div>' +
+        '<div class="tl-dot ' + (done ? 'done':'') + ' ' + (current ? 'current':'') + '"></div>' +
+        '<h5>' + label + '</h5>' +
+        '<p>' + (current ? 'In progress' : done ? 'Completed' : 'Pending') + '</p>';
+      tl.appendChild(step);
+    });
+  }
+</script>
+
+</body>
+</html>
